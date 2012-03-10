@@ -10,7 +10,7 @@ module ImportProducts
 
     def perform
       begin
-        product_import = ProductImport.find(self.product_import_id)
+        product_import = Spree::ProductImport.find(self.product_import_id)
         results = product_import.import_data!
         Spree::UserMailer.product_import_results(Spree::User.find(self.user_id)).deliver
       rescue Exception => exp
