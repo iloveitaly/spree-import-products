@@ -83,7 +83,7 @@ module Spree
 
       rescue Exception => exp
         log("An error occurred during import, please check file and try again. (#{exp.message})\n#{exp.backtrace.join('\n')}", :error)
-        raise Exception(exp.message)
+        raise Exception.new(exp.message)
       end
 
       after_product_import(rows, col)
