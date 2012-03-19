@@ -1,6 +1,6 @@
 class CreateProductImports < ActiveRecord::Migration
   def self.up
-    create_table :product_imports do |t|
+    create_table :spree_product_imports do |t|
       t.string :data_file_file_name
       t.string :data_file_content_type
       t.integer :data_file_file_size
@@ -10,6 +10,6 @@ class CreateProductImports < ActiveRecord::Migration
   end
 
   def self.down
-    drop_table :product_imports
+    drop_table :spree_product_imports
   end
 end

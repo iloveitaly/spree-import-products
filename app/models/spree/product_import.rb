@@ -20,19 +20,25 @@ module Spree
     # Image main is created independtly, then each other image also created and associated with the product
     # Meta keywords and description are created on the product model
 
-    def import_data!
+    def import_data! data_path = nil
       begin
         #Get products *before* import -
         @products_before_import = Spree::Product.all
         @names_of_products_before_import = @products_before_import.map(&:name)
 
-        rows = CSV.read(self.data_file.path)
+        unless data_path.nil?
+          rows = CSV.read(data_path)
+        else
+          rows = CSV.read(self.data_file.path)
+        end
 
         if IMPORT_PRODUCT_SETTINGS[:first_row_is_headings]
           col = get_column_mappings(rows[0])
         else
           col = IMPORT_PRODUCT_SETTINGS[:column_mappings]
         end
+
+        before_product_import(rows, col)
 
         log("Importing products for #{self.data_file_file_name} began at #{Time.now}")
         rows[IMPORT_PRODUCT_SETTINGS[:rows_to_skip]..-1].each do |row|
@@ -79,6 +85,8 @@ module Spree
         log("An error occurred during import, please check file and try again. (#{exp.message})\n#{exp.backtrace.join('\n')}", :error)
         raise Exception(exp.message)
       end
+
+      after_product_import(rows, col)
 
       #All done!
       return [:notice, "Product data was successfully imported."]
@@ -165,6 +173,11 @@ module Spree
       # What this does is only assigns values to products if the product accepts that field.
       params_hash[:price] ||= params_hash[:master_price]
       params_hash.each do |field, value|
+        if value.nil?
+          log "Found nil value for #{field}"
+          next
+        end
+        next if IMPORT_PRODUCT_SETTINGS[:skip_fields].include? field
         product.send("#{field}=", value) if product.respond_to?("#{field}=")
       end
 
@@ -320,7 +333,7 @@ module Spree
       taxonomy = Spree::Taxonomy.find(:first, :conditions => ["lower(name) = ?", taxonomy])
       taxonomy = Spree::Taxonomy.create(:name => taxonomy_name.capitalize) if taxonomy.nil? && IMPORT_PRODUCT_SETTINGS[:create_missing_taxonomies]
 
-      taxon_hierarchy.split(/\s*\&\s*/).each do |hierarchy|
+      taxon_hierarchy.split(/\s*\#{IMPORT_PRODUCT_SETTINGS[:taxon_list_seperator]}\s*/).each do |hierarchy|
         hierarchy = hierarchy.split(/\s*>\s*/)
         last_taxon = taxonomy.root
         hierarchy.each do |taxon|
@@ -343,7 +356,9 @@ module Spree
     #        # so something with the product
     #      end
     #    end
-    def after_product_built(product, params_hash)
-    end
+
+    def after_product_built(product, params_hash); end
+    def before_product_import(rows, columns); end
+    def after_product_import(rows, columns); end
   end
 end

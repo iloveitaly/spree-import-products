@@ -17,6 +17,8 @@ IMPORT_PRODUCT_SETTINGS = {
     :description => 12,
     :category => 13
   },
+  :skip_fields => [],
+  :taxon_list_seperator => "&",
   :create_missing_taxonomies => true,
   :taxonomy_fields => [:category, :brand], #Fields that should automatically be parsed for taxons to associate
   :image_fields => [:image_main, :image_2, :image_3, :image_4], #Image fields that should be parsed for image locations

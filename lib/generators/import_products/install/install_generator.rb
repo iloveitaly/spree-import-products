@@ -6,7 +6,7 @@ module ImportProducts
         
         # not sure if this is still relevant; was contained in the old rake install
         puts "NOTE: This extensions uses delayed job - you need to generate additional migrations for" +
-        " this gem by executing `rails generate delayed_job_migrations'"
+        " this gem by executing `rails generate delayed_job:active_record'"
       end
 
       def run_migrations
