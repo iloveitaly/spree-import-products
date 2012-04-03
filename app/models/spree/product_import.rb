@@ -64,7 +64,7 @@ module Spree
           variant_comparator_column = col[variant_comparator_field]
 
           if IMPORT_PRODUCT_SETTINGS[:create_variants] and variant_comparator_column and
-              p = Spree::Product.where(variant_comparator_field => row[variant_comparator_column]).first
+            p = Spree::Product.where(variant_comparator_field => row[variant_comparator_column]).first
 
             log("found product with this field #{variant_comparator_field}=#{row[variant_comparator_column]}")
             p.update_attribute(:deleted_at, nil) if p.deleted_at #Un-delete product if it is there
@@ -107,7 +107,7 @@ module Spree
       # Just update variant if exists
       variant = Spree::Variant.find_by_sku(options[:with][:sku])
       if !variant
-        product.variants.new
+        variant = product.variants.new
         variant.id = options[:with][:id]
       else
         options[:with].delete(:id)
@@ -137,6 +137,8 @@ module Spree
       end
 
       log "VARIANT PRICE #{variant.inspect} /// #{variant.price}"
+
+      after_variant_built(variant, options[:with])
 
       if variant.valid?
         variant.save
@@ -358,6 +360,7 @@ module Spree
     #    end
 
     def after_product_built(product, params_hash); end
+    def after_variant_built(product, params_hash); end
     def before_product_import(rows, columns); end
     def after_product_import(rows, columns); end
   end
