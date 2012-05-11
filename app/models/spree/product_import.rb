@@ -206,7 +206,6 @@ module Spree
         #Save the object before creating asssociated objects
         product.save
 
-
         #Associate our new product with any taxonomies that we need to worry about
         IMPORT_PRODUCT_SETTINGS[:taxonomy_fields].each do |field|
           associate_product_with_taxon(product, field.to_s, params_hash[field.to_sym])
@@ -214,7 +213,7 @@ module Spree
 
         #Finally, attach any images that have been specified
         IMPORT_PRODUCT_SETTINGS[:image_fields].each do |field|
-          find_and_attach_image_to(product, params_hash[field.to_sym])
+          find_and_attach_image_to(product.master, params_hash[field.to_sym])
         end
 
         if IMPORT_PRODUCT_SETTINGS[:multi_domain_importing] && product.respond_to?(:stores)
@@ -232,6 +231,8 @@ module Spree
             log("#{product.name} could not be associated with a store. Ensure that Spree's multi_domain extension is installed and that fields are mapped to the CSV correctly.")
           end
         end
+
+        product.save!
 
         #Log a success message
         log("#{product.name} successfully imported.\n")
@@ -275,18 +276,16 @@ module Spree
     # find_and_attach_image_to
     # This method attaches images to products. The images may come
     # from a local source (i.e. on disk), or they may be online (HTTP/HTTPS).
-    def find_and_attach_image_to(product_or_variant, filename)
+    def find_and_attach_image_to(variant, filename)
       return if filename.blank?
 
-      #The image can be fetched from an HTTP or local source - either method returns a Tempfile
       file = filename =~ /\Ahttp[s]*:\/\// ? fetch_remote_image(filename) : fetch_local_image(filename)
-      #An image has an attachment (the image file) and some object which 'views' it
-      product_image = Spree::Image.new({:attachment => file,
-                                :viewable => product_or_variant,
-                                :position => product_or_variant.images.length
-                                })
-
-      product_or_variant.images << product_image if product_image.save
+      
+      variant.images.create!({
+        :attachment => file,
+        :viewable => variant,
+        :position => variant.images.length
+      })
     end
 
     # This method is used when we have a set location on disk for
