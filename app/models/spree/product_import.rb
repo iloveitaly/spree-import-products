@@ -308,8 +308,20 @@ module Spree
     # If it fails, it in the first instance logs the HTTP error (404, 500 etc)
     # If it fails altogether, it logs it and exits the method.
     def fetch_remote_image(filename)
+      if @temp_dir.blank?
+        @temp_dir = Dir.mktmpdir
+      end
+
+      local_file_path = File.join(@temp_dir, File.basename(filename))
+
       begin
-        open(filename)
+        open(local_file_path, "wb") do |local_image|
+          open(filename) do |remote_image|
+            local_image.write(remote_image.read)
+          end
+        end
+
+        open(local_file_path)
       rescue OpenURI::HTTPError => error
         log("Image #{filename} retrival returned #{error.message}, so this image was not imported")
       rescue
